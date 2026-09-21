@@ -96,6 +96,18 @@ DataStorage::ScanConfigDirectory()
 		// with non-ASCII characters aren't corrupted before we reopen them later.
 		const auto& path = entry.path();
 
+		// TEMP DIAGNOSTIC: dump the raw UTF-16 code units of the filename so we can
+		// tell whether the OS/Wine handed us genuinely corrupted data, or whether
+		// this is just a lossy ANSI display artifact from .string().
+		{
+			const std::wstring native = path.filename().native();
+			std::string hex;
+			for (wchar_t wc : native) {
+				hex += std::format("{:04X} ", static_cast<unsigned short>(wc));
+			}
+			logger::info("RAW CODEPOINTS [{}]: {}", native.size(), hex);
+		}
+
 		// Old logic: plugin configs contain ".es"
 		if (stem.contains(".es")) {
 			logger::info("Found plugin-specific config: {}", path.string());
