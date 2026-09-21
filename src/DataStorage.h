@@ -1,5 +1,6 @@
 #pragma once
 
+#include <filesystem>
 #include <iostream>
 #include <string>
 #include <unordered_map>
@@ -29,13 +30,13 @@ public:
 	void InsertConflictInformationRegions(RE::TESForm* a_region, RE::TESForm* a_sound, std::list<std::string> a_fields);
 	void InsertConflictInformation(RE::TESForm* a_form, std::list<std::string> a_fields);
 
-	std::pair<std::set<std::string>, std::set<std::string>> ScanConfigDirectory(); // Add this
-	std::map<std::string, std::set<std::string>> MatchPluginConfigs(const std::set<std::string>& pluginConfigs);  // Add this
-	void ParseAllConfigs( const std::map<std::string, std::set<std::string>>& pluginMap, const std::set<std::string>& generalConfigs); // Add this
+	std::pair<std::set<std::filesystem::path>, std::set<std::filesystem::path>> ScanConfigDirectory(); // Add this
+	std::map<std::string, std::set<std::filesystem::path>> MatchPluginConfigs(const std::set<std::filesystem::path>& pluginConfigs);  // Add this
+	void ParseAllConfigs( const std::map<std::string, std::set<std::filesystem::path>>& pluginMap, const std::set<std::filesystem::path>& generalConfigs); // Add this
 	void PrintConflicts(); // Add this
 
 	void LoadConfigs();
-	void ParseConfigs(const std::set<std::string>& a_configs); // Change this to take const reference
+	void ParseConfigs(const std::set<std::filesystem::path>& a_configs); // Change this to take const reference
 	void RunConfig(json& s_jsonData);
 
 	stl::enumeration<RE::TESRegionDataSound::Sound::Flag, std::uint32_t> GetSoundFlags(std::list<std::string> a_input);

@@ -202,6 +202,12 @@ TOJSON_NODISCARD inline nlohmann::json loadyaml(const std::string &filepath) {
 	return detail::yaml2json(root);
 }
 
+/// \brief Load YAML from an already-open stream to JSON (avoids re-opening the file by path).
+TOJSON_NODISCARD inline nlohmann::json loadyaml(std::istream &stream) {
+	YAML::Node root = YAML::Load(stream);
+	return detail::yaml2json(root);
+}
+
 /// \brief Load XML file to JSON.
 TOJSON_NODISCARD inline nlohmann::json loadxml(const std::string &filepath) {
 	std::ifstream file{filepath.data()};

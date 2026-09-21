@@ -67,11 +67,11 @@ void DataStorage::InsertConflictInformation(RE::TESForm* a_form, std::list<std::
 		InsertConflictField(conflictMap[a_form], field);
 }
 
-std::pair<std::set<std::string>, std::set<std::string>>
+std::pair<std::set<std::filesystem::path>, std::set<std::filesystem::path>>
 DataStorage::ScanConfigDirectory()
 {
-	std::set<std::string> generalConfigs;
-	std::set<std::string> pluginConfigs;
+	std::set<std::filesystem::path> generalConfigs;
+	std::set<std::filesystem::path> pluginConfigs;
 
 	constexpr auto folder = R"(Data\)"sv;
 
@@ -92,14 +92,16 @@ DataStorage::ScanConfigDirectory()
 			continue;
 		}
 
-		const auto path = entry.path().string();
+		// Keep the native filesystem::path (instead of a narrow string) so paths
+		// with non-ASCII characters aren't corrupted before we reopen them later.
+		const auto& path = entry.path();
 
 		// Old logic: plugin configs contain ".es"
 		if (stem.contains(".es")) {
-			logger::info("Found plugin-specific config: {}", path);
+			logger::info("Found plugin-specific config: {}", path.string());
 			pluginConfigs.insert(path);
 		} else {
-			logger::info("Found general config: {}", path);
+			logger::info("Found general config: {}", path.string());
 			generalConfigs.insert(path);
 		}
 	}
@@ -107,10 +109,10 @@ DataStorage::ScanConfigDirectory()
 	return { generalConfigs, pluginConfigs };
 }
 
-std::map<std::string, std::set<std::string>>
-DataStorage::MatchPluginConfigs(const std::set<std::string>& pluginConfigs)
+std::map<std::string, std::set<std::filesystem::path>>
+DataStorage::MatchPluginConfigs(const std::set<std::filesystem::path>& pluginConfigs)
 {
-	std::map<std::string, std::set<std::string>> result;
+	std::map<std::string, std::set<std::filesystem::path>> result;
 
 	auto* dataHandler = RE::TESDataHandler::GetSingleton();
 
@@ -127,10 +129,10 @@ DataStorage::MatchPluginConfigs(const std::set<std::string>& pluginConfigs)
 			continue;
 		}
 
-		std::set<std::string> matched;
+		std::set<std::filesystem::path> matched;
 
 		for (const auto& configPath : pluginConfigs) {
-			const auto configName = std::filesystem::path(configPath).filename().string();
+			const auto configName = configPath.filename().string();
 
 			// Old logic: config filename starts with plugin name
 			if (configName.rfind(pluginName, 0) == 0) {
@@ -148,8 +150,8 @@ DataStorage::MatchPluginConfigs(const std::set<std::string>& pluginConfigs)
 }
 
 void DataStorage::ParseAllConfigs(
-	const std::map<std::string, std::set<std::string>>& pluginMap,
-	const std::set<std::string>& generalConfigs)
+	const std::map<std::string, std::set<std::filesystem::path>>& pluginMap,
+	const std::set<std::filesystem::path>& generalConfigs)
 {
 	logger::info("\nParsing configs...");
 
@@ -245,11 +247,10 @@ void DataStorage::LoadConfigs()
 				 std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count());
 }
 
-void DataStorage::ParseConfigs(const std::set<std::string>& a_configs)
+void DataStorage::ParseConfigs(const std::set<std::filesystem::path>& a_configs)
 {
-	for (const auto& configPath : a_configs) {
+	for (const auto& path : a_configs) {
 
-		const std::filesystem::path path(configPath);
 		const std::string filename = path.filename().string();
 		const std::string extension = path.extension().string();
 
@@ -257,7 +258,9 @@ void DataStorage::ParseConfigs(const std::set<std::string>& a_configs)
 		currentFilename = filename;
 
 		try {
-			std::ifstream file(configPath);
+			// Open via the fs::path overload directly (instead of a narrow string) so
+			// paths with non-ASCII characters resolve to the same file on Windows.
+			std::ifstream file(path);
 
 			if (!file.good()) {
 				const std::string errorMessage =
@@ -273,7 +276,7 @@ void DataStorage::ParseConfigs(const std::set<std::string>& a_configs)
 			if (extension == ".yaml") {
 				try {
 					logger::info("Converting {} to JSON object", filename);
-					data = tojson::loadyaml(configPath);
+					data = tojson::loadyaml(file);
 				} catch (const std::exception& exc) {
 					const std::string errorMessage =
 					std::format("Failed to convert {} to JSON object\n{}", filename, exc.what());
