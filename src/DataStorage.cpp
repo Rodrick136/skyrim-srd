@@ -269,6 +269,16 @@ void DataStorage::ParseConfigs(const std::set<std::filesystem::path>& a_configs)
 		logger::info("Parsing {}", filename);
 		currentFilename = filename;
 
+		// DIAGNOSTIC: dump the raw UTF-16 code units of the filename
+		{
+			const std::wstring native = path.filename().native();
+			std::string hex;
+			for (wchar_t wc : native) {
+				hex += std::format("{:04X} ", static_cast<unsigned short>(wc));
+			}
+			logger::info("RAW FILENAME CODEPOINTS [{}]: {}", native.size(), hex);
+		}
+
 		try {
 			// Open via the fs::path overload directly (instead of a narrow string) so
 			// paths with non-ASCII characters resolve to the same file on Windows.
