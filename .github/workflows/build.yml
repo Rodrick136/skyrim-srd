@@ -38,7 +38,7 @@ jobs:
           echo "VCPKG_ROOT=$RUNNER_TEMP/vcpkg" >> "$GITHUB_ENV"
 
       - name: Configure
-        run: cmake -S . --preset=skyrim
+        run: cmake -S . --preset=skyrim -DBUILD_TESTS=OFF
 
       - name: Build
         run: cmake --build build/skyrim --config Release
