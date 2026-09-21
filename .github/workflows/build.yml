@@ -8,7 +8,8 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    # pinned to guarantee VS 2022 is present, matching the "Visual Studio 17 2022" CMake generator
+    runs-on: windows-2022
 
     steps:
       - name: Checkout
