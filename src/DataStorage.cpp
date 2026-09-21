@@ -92,9 +92,8 @@ DataStorage::ScanConfigDirectory()
 			continue;
 		}
 
-		// Keep the native filesystem::path (instead of a narrow string) so paths
-		// with non-ASCII characters aren't corrupted before we reopen them later.
 		const auto& path = entry.path();
+		const auto configPath = std::filesystem::path(folder) / path.filename();
 
 		// TEMP DIAGNOSTIC: dump the raw UTF-16 code units of the full path (not just
 		// the filename) so we can tell whether corruption exists in the directory
@@ -110,11 +109,11 @@ DataStorage::ScanConfigDirectory()
 
 		// Old logic: plugin configs contain ".es"
 		if (stem.contains(".es")) {
-			logger::info("Found plugin-specific config: {}", path.string());
-			pluginConfigs.insert(path);
+			logger::info("Found plugin-specific config: {}", configPath.string());
+			pluginConfigs.insert(configPath);
 		} else {
-			logger::info("Found general config: {}", path.string());
-			generalConfigs.insert(path);
+			logger::info("Found general config: {}", configPath.string());
+			generalConfigs.insert(configPath);
 		}
 	}
 
